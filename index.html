@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriAI Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;font-family:'Inter',sans-serif;background:#0a1525;color:#eef}
+  #root{display:flex;height:100vh}
+  .sidebar{width:200px;background:#111d33;padding:12px}
+  .sidebar button{display:block;width:100%;margin:6px 0;padding:8px;border:0;background:#1a2847;color:#bbb;border-radius:6px;cursor:pointer}
+  .sidebar button.active{background:#16a34a;color:#fff}
+  .main{flex:1;display:flex;flex-direction:column;padding:14px;gap:12px}
+  .card{background:#1a2847;padding:12px;border-radius:8px}
+  .small{font-size:13px;color:#9ab}
+  .btn{background:#16a34a;color:#021;border:0;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:600}
+  video,img{width:100%;border-radius:6px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script type="text/babel">
+const {useState,useEffect,useRef} = React;
+
+function Sidebar({tab,setTab}) {
+  const items=['Dashboard','Climate','Camera','Soil','Study'];
+  return <div className="sidebar">
+    {items.map(i=><button key={i} onClick={()=>setTab(i)} className={tab===i?'active':''}>{i}</button>)}
+  </div>
+}
+
+function Dashboard(){return <div className="card">Welcome! Use tabs to explore Climate AI, Camera Detection, Soil tools & Study modules.</div>}
+
+function Climate(){
+  const [data,setData]=useState(null);const ref=useRef();
+  useEffect(()=>{setData({risk:42,trend:[10,20,30,25,40]});
+    if(ref.current){new Chart(ref.current,{type:'line',data:{labels:['D-4','D-3','D-2','D-1','Now'],datasets:[{data:[10,20,30,25,40]}]},options:{plugins:{legend:{display:false}}}})}
+  },[]);
+  return <div className="card"><div>Risk Score: {data?data.risk+'%':'...'}</div><canvas ref={ref}></canvas></div>
+}
+
+function Camera(){
+  const v=useRef();const[capture,setCap]=useState(null);
+  async function start(){let s=await navigator.mediaDevices.getUserMedia({video:true});v.current.srcObject=s;v.current.play();}
+  function snap(){let c=document.createElement('canvas');c.width=v.current.videoWidth;c.height=v.current.videoHeight;c.getContext('2d').drawImage(v.current,0,0);setCap(c.toDataURL());}
+  return <div className="card">
+    <video ref={v}></video><br/>
+    <button className="btn" onClick={start}>Start</button>
+    <button onClick={snap}>Snap</button>
+    {capture&&<img src={capture}/>}
+  </div>
+}
+
+function Soil(){
+  const [ph,setPh]=useState('');const[msg,setMsg]=useState('');
+  function check(){let v=parseFloat(ph);if(isNaN(v))setMsg('Enter number');else if(v<5.5)setMsg('Acidic: add lime');else if(v>7.5)setMsg('Alkaline: add sulfur');else setMsg('Neutral: good for most crops')}
+  return <div className="card">
+    <input value={ph} onChange={e=>setPh(e.target.value)} placeholder="Soil pH"/><button onClick={check}>Check</button>
+    <div className="small">{msg}</div>
+  </div>
+}
+
+function Study(){
+  const lessons=[['Fertilizers','N:P:K essential nutrients.'],['Pesticides','Use safely, rotate chemicals.'],['Organic','Compost, neem, biocontrol.']];
+  return <div>{lessons.map(l=><div className="card" key={l[0]}><b>{l[0]}</b><div className="small">{l[1]}</div></div>)}</div>
+}
+
+function App(){
+  const[tab,setTab]=useState('Dashboard');
+  return <><Sidebar tab={tab} setTab={setTab}/><div className="main">
+    {tab==='Dashboard'&&<Dashboard/>}
+    {tab==='Climate'&&<Climate/>}
+    {tab==='Camera'&&<Camera/>}
+    {tab==='Soil'&&<Soil/>}
+    {tab==='Study'&&<Study/>}
+  </div></>
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
